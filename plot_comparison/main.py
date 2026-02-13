@@ -93,19 +93,34 @@ def generate_sample_images(plots_gdf, images_dir, overwrite=False):
 
         elif is_allotted:
             # Simulate varying development levels
-            # Bias towards "Full" or "Partial" for Allotted plots
-            development_level = np.random.choice(["vacant", "partial", "full"],
-                                                  p=[0.1, 0.4, 0.5])
+            # Bias towards "Developed" for Allotted plots to show green
+            # But specific logic: Use simple hashing of plot_id to decide status?
+            # This ensures consistency across runs without needing real data.
+            # a simple hash-like heuristic
+            pid_hash = sum(ord(c) for c in str(plot_id))
+            
+            # 20% Vacant, 30% Partial, 50% Full
+            mod_val = pid_hash % 10
+            
+            if mod_val < 2: 
+                development_level = "vacant"
+            elif mod_val < 5:
+                development_level = "partial"
+            else:
+                development_level = "full"
 
             if development_level == "vacant":
                 # Mostly green/brown — empty land
+                # VERY LOW NOISE to ensure it classifies as Vacant (<5%)
                 img[:, :] = (30, 100, 50)
-                noise = np.random.randint(0, 25, img.shape, dtype=np.uint8)
+                # minimal noise
+                noise = np.random.randint(0, 5, img.shape, dtype=np.uint8)
                 img = cv2.add(img, noise)
 
             elif development_level == "partial":
                 # Mix of green and structures
                 img[:, :] = (40, 110, 60)
+                # Moderate noise
                 noise = np.random.randint(0, 20, img.shape, dtype=np.uint8)
                 img = cv2.add(img, noise)
                 # Add some building-like rectangles
@@ -118,31 +133,34 @@ def generate_sample_images(plots_gdf, images_dir, overwrite=False):
                              180 + np.random.randint(0, 50),
                              180 + np.random.randint(0, 50))
                     cv2.rectangle(img, (x1, y1), (x2, y2), color, -1)
-                    cv2.rectangle(img, (x1, y1), (x2, y2), (200, 200, 200), 2) # Stronger usage for edge detection
+                    # High contrast border for edge detection
+                    cv2.rectangle(img, (x1, y1), (x2, y2), (255, 255, 255), 2) 
 
             else:  # full
                 # Dense structures
-                img[:, :] = (180, 180, 180) # Concrete base
-                noise = np.random.randint(0, 20, img.shape, dtype=np.uint8)
-                img = cv2.add(img, noise)
-                # Drawing highly textured industrial roof patterns
-                for i in range(0, 256, 20):
-                     cv2.line(img, (0, i), (256, i), (100, 100, 100), 1)
+                img[:, :] = (100, 100, 100) # Concrete base
+                
+                # Draw grid pattern (roads/walls)
+                for i in range(0, 256, 30):
+                     cv2.line(img, (0, i), (256, i), (200, 200, 200), 2)
+                     cv2.line(img, (i, 0), (i, 256), (200, 200, 200), 2)
                      
-                for _ in range(12):
+                # Add random buildings
+                for _ in range(15):
                     x1 = np.random.randint(5, 180)
                     y1 = np.random.randint(5, 180)
                     x2 = x1 + np.random.randint(30, 70)
                     y2 = y1 + np.random.randint(30, 70)
-                    color = (120 + np.random.randint(0, 60),
-                             120 + np.random.randint(0, 60),
-                             140 + np.random.randint(0, 60))
+                    color = (150 + np.random.randint(0, 80),
+                             150 + np.random.randint(0, 80),
+                             150 + np.random.randint(0, 80))
                     cv2.rectangle(img, (x1, y1), (x2, y2), color, -1)
-                    cv2.rectangle(img, (x1, y1), (x2, y2), (50, 50, 50), 3) # Heavy edges
+                    # White border -> very strong edge
+                    cv2.rectangle(img, (x1, y1), (x2, y2), (255, 255, 255), 3) 
                 
                 # Add road-like features
-                cv2.line(img, (0, 128), (256, 128), (80, 80, 80), 6)
-                cv2.line(img, (128, 0), (128, 256), (80, 80, 80), 6)
+                cv2.line(img, (0, 128), (256, 128), (50, 50, 50), 8)
+                cv2.line(img, (128, 0), (128, 256), (50, 50, 50), 8)
 
         else:
             # Default — some texture

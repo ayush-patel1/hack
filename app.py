@@ -839,10 +839,14 @@ def render_plot_comparison_tab(data):
             # Summary metrics
             mc1, mc2, mc3, mc4 = st.columns(4)
             areas_set = set(f.get("properties", {}).get("INDUSTRIAL", "") for f in feats)
+            
+            # Robust counting including LABEL field
             alloted = sum(1 for f in feats
-                         if "ALLOT" in (f.get("properties", {}).get("STATUS", "") or "").upper())
+                          if "ALLOT" in (f.get("properties", {}).get("STATUS", "") or 
+                                       f.get("properties", {}).get("LABEL", "") or "").upper())
             vacant = sum(1 for f in feats
-                        if "VACANT" in (f.get("properties", {}).get("STATUS", "") or "").upper())
+                        if "VACANT" in (f.get("properties", {}).get("STATUS", "") or 
+                                      f.get("properties", {}).get("LABEL", "") or "").upper())
             with mc1:
                 st.markdown(f"""
                 <div class="metric-card blue">
@@ -1285,8 +1289,13 @@ def render_plot_comparison_tab(data):
                  else: # Fully Developed
                      color = "#2ecc71" # Green (Compliant)
                      
-                     # Simulate Encroachment for demo (20% chance for Developed plots)
-                     if random.random() < 0.2:
+                     color = "#2ecc71" # Green (Compliant)
+                     
+                     # Simulate Encroachment based on Plot ID hash (Consistent Demo)
+                     # Instead of random, use plot_id char sum
+                     pid_hash = sum(ord(c) for c in pid)
+                     # 20% chance: if hash % 5 == 0
+                     if pid_hash % 5 == 0:
                          is_encroachment = True
                          # Buffer geometry to simulate extension beyond boundary
                          # 0.0003 deg is approx 30 meters, visible extension
@@ -1352,14 +1361,49 @@ def render_plot_comparison_tab(data):
           <b>Analysis Legend</b><br>
           <span style="color:#3498db; border-bottom: 2px dashed #3498db">╍╍</span> Allotted Boundary <br>
           <span style="color:#2ecc71">■</span> Developed (>60%) <br>
-          <span style="color:#f39c12">■</span> Partial (15-60%) <br>
-          <span style="color:#e74c3c">■</span> Vacant (<15%)
+          <span style="color:#e67e22">■</span> Partial (15-60%) <br>
+          <span style="color:#f1c40f">■</span> Vacant (<15%) <br>
+          <span style="color:#e74c3c">■</span> <b>Encroachment / Violation</b>
         </div>
         """
         m_compare.get_root().html.add_child(folium.Element(legend_html))
 
         st_folium(m_compare, width=None, height=520, use_container_width=True,
                   key="compare_map")
+                  
+        # Report Generation
+        st.markdown("### 📄 Export Analysis")
+        if st.button("Generate PDF Report"):
+            with st.spinner("Generating PDF report..."):
+                try:
+                    from plot_comparison.report import generate_pdf_report
+                    # Prepare clean results for report
+                    clean_results = []
+                    for r in analysis_results:
+                        clean = {k: v for k, v in r.items() if k != "edge_mask"}
+                        clean_results.append(clean)
+                    
+                    report_path = os.path.join(DATA_DIR, f"Analysis_Report_{datetime.now().strftime('%Y%m%d_%H%M')}.pdf")
+                    # We need a viz_dir for report images
+                    viz_dir = os.path.join(DATA_DIR, "visualizations")
+                    os.makedirs(viz_dir, exist_ok=True)
+                    
+                    generate_pdf_report(clean_results, report_path, viz_dir=viz_dir)
+                    
+                    with open(report_path, "rb") as pdf_file:
+                        pdf_bytes = pdf_file.read()
+
+                    st.download_button(
+                        label="⬇️ Download PDF Report",
+                        data=pdf_bytes,
+                        file_name=os.path.basename(report_path),
+                        mime="application/pdf"
+                    )
+                    st.success("Report generated successfully!")
+                    
+                except Exception as e:
+                    st.error(f"Failed to generate report: {e}")
+                    
     else:
         st.info("No data available for comparison.")
 
@@ -1368,115 +1412,11 @@ def render_plot_comparison_tab(data):
     st.markdown("---")
 
     # ── Section 3: Allotment Zone Overview ──────────────────
-    allotment = data.get("allotment")
-    if allotment and allotment.get("features"):
-        st.markdown("### 🗺️ Allotment Map — Zone Overview")
-        st.caption("Official plot zones from allotment map with color-coded categories")
+    # Removed as per user request to declutter
+    pass
 
-        # Center on allotment data
-        all_lons, all_lats = [], []
-        for feat in allotment["features"]:
-            geom_type = feat["geometry"]["type"]
-            if geom_type == "Polygon":
-                for coord in feat["geometry"]["coordinates"][0]:
-                    all_lons.append(coord[0])
-                    all_lats.append(coord[1])
-            elif geom_type == "LineString":
-                for coord in feat["geometry"]["coordinates"]:
-                    all_lons.append(coord[0])
-                    all_lats.append(coord[1])
-        center_lat = np.mean(all_lats) if all_lats else 20.877
-        center_lon = np.mean(all_lons) if all_lons else 81.655
 
-        m_allot = folium.Map(location=[center_lat, center_lon], zoom_start=16,
-                             tiles="CartoDB positron")
 
-        zone_colors = {
-            "TILDA": "#3498db",
-            "EXPANSION": "#9b59b6",
-            "GREEN_AREA": "#27ae60",
-            "PARKING": "#7f8c8d",
-            "WAREHOUSE": "#e67e22",
-            "WATER_BODY": "#00bcd4",
-            "FOOD_PARK": "#f39c12",
-            "AMENITIES": "#1abc9c",
-            "ROAD": "#95a5a6",
-            "BOUNDARY": "#e74c3c",
-        }
-
-        for feat in allotment["features"]:
-            props = feat["properties"]
-            zone = props.get("zone", "")
-            color = zone_colors.get(zone, "#3498db")
-            geom_type = feat["geometry"]["type"]
-
-            if geom_type == "Polygon":
-                coords = feat["geometry"]["coordinates"][0]
-                latlng = [(c[1], c[0]) for c in coords]
-                is_boundary = zone == "BOUNDARY"
-
-                tooltip_text = (
-                    f"<b>{props.get('plot_number', '')}</b><br>"
-                    f"Zone: {zone}<br>"
-                    f"Type: {props.get('industry_type', 'N/A')}<br>"
-                    f"Area: {props.get('area_sqm', 0):,} m²<br>"
-                    f"Status: {props.get('status', 'N/A')}"
-                )
-                folium.Polygon(
-                    locations=latlng,
-                    color=color,
-                    weight=4 if is_boundary else 2,
-                    fill=True,
-                    fill_color=color,
-                    fill_opacity=0.05 if is_boundary else 0.3,
-                    dash_array="10 5" if is_boundary else None,
-                    tooltip=folium.Tooltip(tooltip_text),
-                ).add_to(m_allot)
-
-            elif geom_type == "LineString":
-                coords = feat["geometry"]["coordinates"]
-                latlng = [(c[1], c[0]) for c in coords]
-                folium.PolyLine(
-                    locations=latlng,
-                    color=color,
-                    weight=4,
-                    tooltip=f"🛣️ {props.get('plot_number', '')} — Road",
-                ).add_to(m_allot)
-
-        folium.LayerControl().add_to(m_allot)
-
-        # Zone legend
-        zone_legend = '<div style="position:fixed; bottom:50px; right:50px; z-index:1000; '
-        zone_legend += 'background:rgba(255,255,255,0.95); padding:14px 18px; border-radius:10px; '
-        zone_legend += 'color:#333; font-size:12px; box-shadow:0 2px 12px rgba(0,0,0,0.2);">'
-        zone_legend += '<b>Zone Legend</b><br>'
-        for zone, color in zone_colors.items():
-            zone_legend += f'<span style="color:{color}">■</span> {zone.replace("_", " ").title()} &nbsp;'
-        zone_legend += '</div>'
-        m_allot.get_root().html.add_child(folium.Element(zone_legend))
-
-        st_folium(m_allot, width=None, height=480, use_container_width=True,
-                  key="allotment_map")
-
-        # Allotment summary
-        allot_df_rows = []
-        for feat in allotment["features"]:
-            p = feat["properties"]
-            if p.get("zone") not in ("ROAD", "BOUNDARY"):
-                allot_df_rows.append({
-                    "Plot": p.get("plot_number", ""),
-                    "Zone": p.get("zone", ""),
-                    "Type": p.get("industry_type", ""),
-                    "Area (m²)": p.get("area_sqm", 0),
-                    "Status": p.get("status", ""),
-                    "Allotment Date": p.get("allotment_date", "N/A"),
-                    "Construction": "✅" if p.get("construction_allowed", True) else "❌",
-                })
-        if allot_df_rows:
-            st.markdown("#### 📋 Allotment Details")
-            st.dataframe(pd.DataFrame(allot_df_rows), use_container_width=True)
-    else:
-        st.info("No allotment map data available (`data/allotment_map.geojson`).")
 
 
 # ──────────────────────────────────────────────
