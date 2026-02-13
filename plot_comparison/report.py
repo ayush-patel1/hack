@@ -97,7 +97,7 @@ def _get_status_color(status):
         return colors.Color(0.6, 0.9, 0.6)        # Light green
 
 
-def generate_pdf_report(results, output_path, viz_dir=None):
+def generate_pdf_report(results, output_path, viz_dir=None, map_images=None):
     """
     Generate a professional PDF report with plot analysis results.
 
@@ -176,6 +176,52 @@ def generate_pdf_report(results, output_path, viz_dir=None):
     ]))
     elements.append(summary_table)
     elements.append(Spacer(1, 20))
+
+    # ── Map Images Section ──
+    if map_images:
+        elements.append(PageBreak())
+        elements.append(Paragraph("Map Analysis", section_style))
+        elements.append(Spacer(1, 6))
+
+        map_desc_style = ParagraphStyle(
+            "MapDesc",
+            parent=styles["Normal"],
+            fontSize=10,
+            textColor=colors.HexColor("#555555"),
+            spaceAfter=8,
+        )
+
+        for map_img in map_images:
+            img_path = map_img.get("path", "")
+            img_title = map_img.get("title", "Map")
+            if not os.path.exists(img_path):
+                continue
+            try:
+                # Title for this map
+                elements.append(Paragraph(
+                    f"<b>{img_title}</b>",
+                    ParagraphStyle("MapTitle", parent=styles["Normal"],
+                                   fontSize=12, spaceAfter=4,
+                                   textColor=colors.HexColor("#283593"))
+                ))
+
+                # Determine image dimensions preserving aspect ratio
+                from PIL import Image as PILImage
+                with PILImage.open(img_path) as pil_img:
+                    orig_w, orig_h = pil_img.size
+
+                # Landscape A4 usable width ~700pt, leave margin
+                max_w = 680
+                max_h = 340
+                ratio = min(max_w / orig_w, max_h / orig_h)
+                display_w = orig_w * ratio
+                display_h = orig_h * ratio
+
+                img = RLImage(img_path, width=display_w, height=display_h)
+                elements.append(img)
+                elements.append(Spacer(1, 16))
+            except Exception as e:
+                print(f"[Report] Warning: Could not embed map image {img_title}: {e}")
 
     # ── Detailed Results Table ──
     elements.append(Paragraph("Detailed Plot Analysis", section_style))
