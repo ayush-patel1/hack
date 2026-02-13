@@ -127,6 +127,16 @@ def load_data():
     else:
         data["satellite_raw"] = None
 
+    # Load CSIDC scraped plots and allotment map
+    csidc_path = os.path.join(DATA_DIR, "csidc_real_plots.geojson")
+    allot_path = os.path.join(DATA_DIR, "allotment_map.geojson")
+    for name, path in [("csidc_plots", csidc_path), ("allotment", allot_path)]:
+        if os.path.exists(path):
+            with open(path) as f:
+                data[name] = json.load(f)
+        else:
+            data[name] = None
+
     return data
 
 
@@ -720,6 +730,395 @@ SAT_DIR = os.path.join(DATA_DIR, "satellite")
 
 
 # ──────────────────────────────────────────────
+#  Plot Comparison Tab (GeoJSON overlay)
+# ──────────────────────────────────────────────
+def render_plot_comparison_tab(data):
+    """Interactive GeoJSON comparison: allotted boundaries vs current development."""
+
+    st.markdown('<div class="section-header">🔍 GeoJSON Plot Comparison — Allotted vs Current</div>',
+                unsafe_allow_html=True)
+
+    # ── Section 1: CSIDC Scraped Data Map ──────────────────
+    csidc = data.get("csidc_plots")
+    if csidc and csidc.get("features"):
+        st.markdown("### 🏗️ CSIDC Scraped Plot Polygons")
+        st.caption("Polygons extracted from CSIDC GeoServer WMS tiles")
+
+        # Compute center from features
+        all_lons, all_lats = [], []
+        for feat in csidc["features"]:
+            if feat["geometry"]["type"] == "Polygon":
+                for coord in feat["geometry"]["coordinates"][0]:
+                    all_lons.append(coord[0])
+                    all_lats.append(coord[1])
+        center_lat = np.mean(all_lats) if all_lats else 22.98
+        center_lon = np.mean(all_lons) if all_lons else 82.91
+
+        m_csidc = folium.Map(location=[center_lat, center_lon], zoom_start=16,
+                             tiles="CartoDB dark_matter")
+
+        # Color palette for CSIDC plots
+        csidc_colors = ["#e74c3c", "#3498db", "#2ecc71", "#f39c12", "#9b59b6",
+                        "#1abc9c", "#e67e22", "#00bcd4", "#ff5722", "#607d8b"]
+        for i, feat in enumerate(csidc["features"]):
+            if feat["geometry"]["type"] != "Polygon":
+                continue
+            coords = feat["geometry"]["coordinates"][0]
+            latlng = [(c[1], c[0]) for c in coords]
+            pid = feat["properties"].get("plot_id", f"Plot_{i}")
+            area_px = feat["properties"].get("area_px", 0)
+            color = csidc_colors[i % len(csidc_colors)]
+
+            folium.Polygon(
+                locations=latlng,
+                color=color,
+                weight=3,
+                fill=True,
+                fill_color=color,
+                fill_opacity=0.3,
+                tooltip=f"🏗️ {pid} | Area: {area_px:,} px",
+                popup=folium.Popup(
+                    f"<b>{pid}</b><br>"
+                    f"Source: {feat['properties'].get('source', 'CSIDC')}<br>"
+                    f"Area (px): {area_px:,}",
+                    max_width=250
+                ),
+            ).add_to(m_csidc)
+
+        folium.LayerControl().add_to(m_csidc)
+        st_folium(m_csidc, width=None, height=480, use_container_width=True,
+                  key="csidc_map")
+
+        # Summary
+        st.info(f"📊 **{len(csidc['features'])} polygons** scraped from CSIDC GeoServer")
+    else:
+        st.warning("No CSIDC scraped data found (`data/csidc_real_plots.geojson`).")
+
+    st.markdown("---")
+
+    # ── Section 2: Reference vs Current Boundary Comparison ─
+    ref_data = data.get("reference")
+    cur_data = data.get("current")
+
+    if ref_data and cur_data and ref_data.get("features") and cur_data.get("features"):
+        st.markdown("### 📐 Allotted (Reference) vs Current Development")
+        st.caption("Green dashed = allotted boundary · Solid = current development")
+
+        # Build lookup by plot_id
+        ref_by_id = {f["properties"]["plot_id"]: f for f in ref_data["features"]}
+        cur_by_id = {f["properties"]["plot_id"]: f for f in cur_data["features"]}
+        all_ids = sorted(set(list(ref_by_id.keys()) + list(cur_by_id.keys())))
+
+        # Compute center
+        all_lons, all_lats = [], []
+        for feat in ref_data["features"] + cur_data["features"]:
+            if feat["geometry"]["type"] == "Polygon":
+                for coord in feat["geometry"]["coordinates"][0]:
+                    all_lons.append(coord[0])
+                    all_lats.append(coord[1])
+        center_lat = np.mean(all_lats) if all_lats else 21.25
+        center_lon = np.mean(all_lons) if all_lons else 81.63
+
+        m_compare = folium.Map(location=[center_lat, center_lon], zoom_start=15,
+                               tiles="CartoDB dark_matter")
+
+        ref_group = folium.FeatureGroup(name="✅ Allotted Boundaries (Reference)", show=True)
+        cur_group = folium.FeatureGroup(name="🏗️ Current Development", show=True)
+        diff_group = folium.FeatureGroup(name="⚠️ Change Highlight", show=True)
+
+        violation_colors = {
+            "COMPLIANT": "#2ecc71",
+            "ENCROACHMENT": "#e74c3c",
+            "UNAUTHORIZED_CONSTRUCTION": "#e67e22",
+            "VACANT_PLOT": "#95a5a6",
+            "BOUNDARY_DEVIATION": "#f1c40f",
+        }
+
+        comparison_rows = []
+
+        for pid in all_ids:
+            ref_feat = ref_by_id.get(pid)
+            cur_feat = cur_by_id.get(pid)
+
+            # Reference polygon (green dashed)
+            if ref_feat and ref_feat["geometry"]["type"] == "Polygon":
+                coords = ref_feat["geometry"]["coordinates"][0]
+                latlng = [(c[1], c[0]) for c in coords]
+                folium.Polygon(
+                    locations=latlng,
+                    color="#38ef7d",
+                    weight=2,
+                    fill=True,
+                    fill_color="#38ef7d",
+                    fill_opacity=0.1,
+                    dash_array="8 4",
+                    tooltip=f"📐 {pid} — Allotted Boundary",
+                ).add_to(ref_group)
+
+            # Current polygon (color by violation type)
+            if cur_feat and cur_feat["geometry"]["type"] == "Polygon":
+                coords = cur_feat["geometry"]["coordinates"][0]
+                latlng = [(c[1], c[0]) for c in coords]
+                vtype = cur_feat["properties"].get("violation_type", "COMPLIANT")
+                color = violation_colors.get(vtype, "#3498db")
+
+                folium.Polygon(
+                    locations=latlng,
+                    color=color,
+                    weight=3,
+                    fill=True,
+                    fill_color=color,
+                    fill_opacity=0.3,
+                    tooltip=f"🏗️ {pid} — {vtype}",
+                    popup=folium.Popup(
+                        f"<b>{pid}</b><br>Status: {vtype}", max_width=250
+                    ),
+                ).add_to(cur_group)
+
+            # Compute area & IoU if both exist
+            if ref_feat and cur_feat:
+                try:
+                    ref_shape = shape(ref_feat["geometry"])
+                    cur_shape = shape(cur_feat["geometry"])
+                    ref_area = ref_shape.area * 1e10  # rough m² at this latitude
+                    cur_area = cur_shape.area * 1e10
+                    intersection = ref_shape.intersection(cur_shape).area * 1e10
+                    union = ref_shape.union(cur_shape).area * 1e10
+                    iou = intersection / union if union > 0 else 0
+                    area_diff_pct = ((cur_area - ref_area) / ref_area * 100) if ref_area > 0 else 0
+                    vtype = cur_feat["properties"].get("violation_type", "COMPLIANT")
+
+                    comparison_rows.append({
+                        "Plot ID": pid,
+                        "Ref Area (rel)": f"{ref_area:,.0f}",
+                        "Cur Area (rel)": f"{cur_area:,.0f}",
+                        "Area Change %": f"{area_diff_pct:+.1f}%",
+                        "IoU": f"{iou:.3f}",
+                        "Boundary Match": "✅ Good" if iou > 0.85 else ("⚠️ Deviated" if iou > 0.6 else "❌ Major"),
+                        "Violation": vtype,
+                    })
+
+                    # Highlight boundary difference area
+                    if iou < 0.95:
+                        try:
+                            sym_diff = ref_shape.symmetric_difference(cur_shape)
+                            if sym_diff.geom_type == "Polygon":
+                                diff_coords = list(sym_diff.exterior.coords)
+                                diff_latlng = [(c[1], c[0]) for c in diff_coords]
+                                folium.Polygon(
+                                    locations=diff_latlng,
+                                    color="#ff1744",
+                                    weight=1,
+                                    fill=True,
+                                    fill_color="#ff1744",
+                                    fill_opacity=0.4,
+                                    tooltip=f"⚠️ {pid} — Boundary Difference",
+                                ).add_to(diff_group)
+                            elif sym_diff.geom_type == "MultiPolygon":
+                                for geom in sym_diff.geoms:
+                                    diff_coords = list(geom.exterior.coords)
+                                    diff_latlng = [(c[1], c[0]) for c in diff_coords]
+                                    folium.Polygon(
+                                        locations=diff_latlng,
+                                        color="#ff1744",
+                                        weight=1,
+                                        fill=True,
+                                        fill_color="#ff1744",
+                                        fill_opacity=0.4,
+                                        tooltip=f"⚠️ {pid} — Boundary Difference",
+                                    ).add_to(diff_group)
+                        except Exception:
+                            pass
+
+                except Exception:
+                    comparison_rows.append({
+                        "Plot ID": pid,
+                        "Ref Area (rel)": "-",
+                        "Cur Area (rel)": "-",
+                        "Area Change %": "-",
+                        "IoU": "-",
+                        "Boundary Match": "❓ Error",
+                        "Violation": cur_feat["properties"].get("violation_type", "-"),
+                    })
+
+        ref_group.add_to(m_compare)
+        cur_group.add_to(m_compare)
+        diff_group.add_to(m_compare)
+        folium.LayerControl(collapsed=False).add_to(m_compare)
+
+        # Legend
+        legend_html = """
+        <div style="position:fixed; bottom:50px; left:50px; z-index:1000;
+             background:rgba(0,0,0,0.85); padding:14px 18px; border-radius:10px;
+             color:white; font-size:12px; box-shadow:0 2px 12px rgba(0,0,0,0.4);">
+          <b>Legend</b><br>
+          <span style="color:#38ef7d">━ ━</span> Allotted Boundary &nbsp;
+          <span style="color:#2ecc71">■</span> Compliant &nbsp;
+          <span style="color:#e74c3c">■</span> Encroachment &nbsp;
+          <span style="color:#e67e22">■</span> Unauthorized &nbsp;
+          <span style="color:#95a5a6">■</span> Vacant &nbsp;
+          <span style="color:#f1c40f">■</span> Deviation &nbsp;
+          <span style="color:#ff1744">■</span> Change Area
+        </div>
+        """
+        m_compare.get_root().html.add_child(folium.Element(legend_html))
+
+        st_folium(m_compare, width=None, height=520, use_container_width=True,
+                  key="compare_map")
+
+        # ── Change Metrics Table ──
+        if comparison_rows:
+            st.markdown("### 📊 Per-Plot Change Metrics")
+            comp_df = pd.DataFrame(comparison_rows)
+            st.dataframe(comp_df, use_container_width=True, height=380)
+
+            # Summary stats
+            compliant_count = sum(1 for r in comparison_rows if r["Violation"] == "COMPLIANT")
+            deviated_count = sum(1 for r in comparison_rows if "Deviated" in r["Boundary Match"] or "Major" in r["Boundary Match"])
+            mc1, mc2, mc3, mc4 = st.columns(4)
+            with mc1:
+                st.markdown(f"""
+                <div class="metric-card blue">
+                    <h3>{len(comparison_rows)}</h3>
+                    <p>📊 Total Plots Compared</p>
+                </div>""", unsafe_allow_html=True)
+            with mc2:
+                st.markdown(f"""
+                <div class="metric-card green">
+                    <h3>{compliant_count}</h3>
+                    <p>✅ Boundary Compliant</p>
+                </div>""", unsafe_allow_html=True)
+            with mc3:
+                st.markdown(f"""
+                <div class="metric-card red">
+                    <h3>{deviated_count}</h3>
+                    <p>⚠️ Boundary Deviated</p>
+                </div>""", unsafe_allow_html=True)
+            with mc4:
+                encroach = sum(1 for r in comparison_rows if r["Violation"] == "ENCROACHMENT")
+                st.markdown(f"""
+                <div class="metric-card yellow">
+                    <h3>{encroach}</h3>
+                    <p>🚧 Encroachments</p>
+                </div>""", unsafe_allow_html=True)
+    else:
+        st.info("No reference or current plot data available for comparison.")
+
+    st.markdown("---")
+
+    # ── Section 3: Allotment Zone Overview ──────────────────
+    allotment = data.get("allotment")
+    if allotment and allotment.get("features"):
+        st.markdown("### 🗺️ Allotment Map — Zone Overview")
+        st.caption("Official plot zones from allotment map with color-coded categories")
+
+        # Center on allotment data
+        all_lons, all_lats = [], []
+        for feat in allotment["features"]:
+            geom_type = feat["geometry"]["type"]
+            if geom_type == "Polygon":
+                for coord in feat["geometry"]["coordinates"][0]:
+                    all_lons.append(coord[0])
+                    all_lats.append(coord[1])
+            elif geom_type == "LineString":
+                for coord in feat["geometry"]["coordinates"]:
+                    all_lons.append(coord[0])
+                    all_lats.append(coord[1])
+        center_lat = np.mean(all_lats) if all_lats else 20.877
+        center_lon = np.mean(all_lons) if all_lons else 81.655
+
+        m_allot = folium.Map(location=[center_lat, center_lon], zoom_start=16,
+                             tiles="CartoDB positron")
+
+        zone_colors = {
+            "TILDA": "#3498db",
+            "EXPANSION": "#9b59b6",
+            "GREEN_AREA": "#27ae60",
+            "PARKING": "#7f8c8d",
+            "WAREHOUSE": "#e67e22",
+            "WATER_BODY": "#00bcd4",
+            "FOOD_PARK": "#f39c12",
+            "AMENITIES": "#1abc9c",
+            "ROAD": "#95a5a6",
+            "BOUNDARY": "#e74c3c",
+        }
+
+        for feat in allotment["features"]:
+            props = feat["properties"]
+            zone = props.get("zone", "")
+            color = zone_colors.get(zone, "#3498db")
+            geom_type = feat["geometry"]["type"]
+
+            if geom_type == "Polygon":
+                coords = feat["geometry"]["coordinates"][0]
+                latlng = [(c[1], c[0]) for c in coords]
+                is_boundary = zone == "BOUNDARY"
+
+                tooltip_text = (
+                    f"<b>{props.get('plot_number', '')}</b><br>"
+                    f"Zone: {zone}<br>"
+                    f"Type: {props.get('industry_type', 'N/A')}<br>"
+                    f"Area: {props.get('area_sqm', 0):,} m²<br>"
+                    f"Status: {props.get('status', 'N/A')}"
+                )
+                folium.Polygon(
+                    locations=latlng,
+                    color=color,
+                    weight=4 if is_boundary else 2,
+                    fill=True,
+                    fill_color=color,
+                    fill_opacity=0.05 if is_boundary else 0.3,
+                    dash_array="10 5" if is_boundary else None,
+                    tooltip=folium.Tooltip(tooltip_text),
+                ).add_to(m_allot)
+
+            elif geom_type == "LineString":
+                coords = feat["geometry"]["coordinates"]
+                latlng = [(c[1], c[0]) for c in coords]
+                folium.PolyLine(
+                    locations=latlng,
+                    color=color,
+                    weight=4,
+                    tooltip=f"🛣️ {props.get('plot_number', '')} — Road",
+                ).add_to(m_allot)
+
+        folium.LayerControl().add_to(m_allot)
+
+        # Zone legend
+        zone_legend = '<div style="position:fixed; bottom:50px; right:50px; z-index:1000; '
+        zone_legend += 'background:rgba(255,255,255,0.95); padding:14px 18px; border-radius:10px; '
+        zone_legend += 'color:#333; font-size:12px; box-shadow:0 2px 12px rgba(0,0,0,0.2);">'
+        zone_legend += '<b>Zone Legend</b><br>'
+        for zone, color in zone_colors.items():
+            zone_legend += f'<span style="color:{color}">■</span> {zone.replace("_", " ").title()} &nbsp;'
+        zone_legend += '</div>'
+        m_allot.get_root().html.add_child(folium.Element(zone_legend))
+
+        st_folium(m_allot, width=None, height=480, use_container_width=True,
+                  key="allotment_map")
+
+        # Allotment summary
+        allot_df_rows = []
+        for feat in allotment["features"]:
+            p = feat["properties"]
+            if p.get("zone") not in ("ROAD", "BOUNDARY"):
+                allot_df_rows.append({
+                    "Plot": p.get("plot_number", ""),
+                    "Zone": p.get("zone", ""),
+                    "Type": p.get("industry_type", ""),
+                    "Area (m²)": p.get("area_sqm", 0),
+                    "Status": p.get("status", ""),
+                    "Allotment Date": p.get("allotment_date", "N/A"),
+                    "Construction": "✅" if p.get("construction_allowed", True) else "❌",
+                })
+        if allot_df_rows:
+            st.markdown("#### 📋 Allotment Details")
+            st.dataframe(pd.DataFrame(allot_df_rows), use_container_width=True)
+    else:
+        st.info("No allotment map data available (`data/allotment_map.geojson`).")
+
+
+# ──────────────────────────────────────────────
 #  Main App
 # ──────────────────────────────────────────────
 def main():
@@ -756,13 +1155,16 @@ def main():
     st.markdown("---")
 
     # Tabs for organised content
-    tab_map, tab_compare, tab_sat, tab_analysis, tab_table, tab_charts, tab_export = st.tabs(
-        ["🗺️ Map", "🖼️ Compare", "🛰️ Satellite", "🔬 Plot Analysis",
+    tab_map, tab_plotcmp, tab_compare, tab_sat, tab_analysis, tab_table, tab_charts, tab_export = st.tabs(
+        ["🗺️ Map", "🔍 Plot Comparison", "🖼️ Compare", "🛰️ Satellite", "🔬 Plot Analysis",
          "📋 Table", "📊 Charts", "📥 Export"]
     )
 
     with tab_map:
         render_map(data)
+
+    with tab_plotcmp:
+        render_plot_comparison_tab(data)
 
     with tab_compare:
         render_image_comparison(data)
