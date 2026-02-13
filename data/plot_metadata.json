@@ -7,9 +7,9 @@
       21.2544,
       81.6236
     ],
-    "area_sqm": 25473.9,
+    "area_sqm": 36490.9,
     "owner": "Industrial Unit 1",
-    "allotment_date": "2015-10-09",
+    "allotment_date": "2015-07-27",
     "violation_type": "COMPLIANT"
   },
   {
@@ -20,9 +20,9 @@
       21.2544,
       81.6266
     ],
-    "area_sqm": 40091.4,
+    "area_sqm": 27489.0,
     "owner": "Industrial Unit 2",
-    "allotment_date": "2013-03-15",
+    "allotment_date": "2011-08-02",
     "violation_type": "ENCROACHMENT"
   },
   {
@@ -33,9 +33,9 @@
       21.2544,
       81.6296
     ],
-    "area_sqm": 37337.4,
+    "area_sqm": 47596.8,
     "owner": "Industrial Unit 3",
-    "allotment_date": "2013-09-05",
+    "allotment_date": "2019-03-23",
     "violation_type": "VACANT_PLOT"
   },
   {
@@ -46,9 +46,9 @@
       21.2544,
       81.6326
     ],
-    "area_sqm": 42626.1,
+    "area_sqm": 22724.8,
     "owner": "Industrial Unit 4",
-    "allotment_date": "2018-02-02",
+    "allotment_date": "2019-03-04",
     "violation_type": "ENCROACHMENT"
   },
   {
@@ -59,9 +59,9 @@
       21.2544,
       81.6356
     ],
-    "area_sqm": 37903.4,
+    "area_sqm": 37393.9,
     "owner": "Industrial Unit 5",
-    "allotment_date": "2017-09-28",
+    "allotment_date": "2012-10-27",
     "violation_type": "UNAUTHORIZED_CONSTRUCTION"
   },
   {
@@ -72,9 +72,9 @@
       21.2514,
       81.6236
     ],
-    "area_sqm": 24874.9,
+    "area_sqm": 33413.8,
     "owner": "Industrial Unit 6",
-    "allotment_date": "2017-10-19",
+    "allotment_date": "2019-08-24",
     "violation_type": "ENCROACHMENT"
   },
   {
@@ -85,9 +85,9 @@
       21.2514,
       81.6266
     ],
-    "area_sqm": 33383.2,
+    "area_sqm": 29452.4,
     "owner": "Industrial Unit 7",
-    "allotment_date": "2015-04-22",
+    "allotment_date": "2013-09-13",
     "violation_type": "COMPLIANT"
   },
   {
@@ -98,9 +98,9 @@
       21.2514,
       81.6296
     ],
-    "area_sqm": 31207.7,
+    "area_sqm": 28934.4,
     "owner": "Industrial Unit 8",
-    "allotment_date": "2015-09-28",
+    "allotment_date": "2014-02-27",
     "violation_type": "ENCROACHMENT"
   },
   {
@@ -111,9 +111,9 @@
       21.2514,
       81.6326
     ],
-    "area_sqm": 34291.5,
+    "area_sqm": 22527.6,
     "owner": "Industrial Unit 9",
-    "allotment_date": "2016-04-05",
+    "allotment_date": "2012-12-03",
     "violation_type": "VACANT_PLOT"
   },
   {
@@ -124,9 +124,9 @@
       21.2514,
       81.6356
     ],
-    "area_sqm": 24404.7,
+    "area_sqm": 35628.2,
     "owner": "Industrial Unit 10",
-    "allotment_date": "2013-02-14",
+    "allotment_date": "2011-09-22",
     "violation_type": "BOUNDARY_DEVIATION"
   }
 ]
