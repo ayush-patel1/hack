@@ -1,0 +1,38 @@
+Layer: CGCOG_DATABASE:csidc_industrial_area_with_plots
+Total features: 2367
+Unique areas: 34
+
+  ?: 1 plots
+  AURETHI BHATAPARA: 16 plots
+  BALODA BAZAR - BHATAPARA: 99 plots
+  ENGINEERING PARK HATHKHOJ BHILAI: 220 plots
+  FOOD PARK BAGAOD: 136 plots
+  Farshabahar Industrial Area and Food Park: 33 plots
+  Food Park Sukma: 38 plots
+  GANGAPUR KHURD: 27 plots
+  INDUSTRIAL AREA SIYARPALI-MAHUAPALI: 50 plots
+  Industrial Area Abhanpur: 48 plots
+  Industrial Area Cum Food park Chandanu Raveli: 127 plots
+  Industrial Area G-Jamgoan: 40 plots
+  Industrial Area Selar: 161 plots
+  Inustrial Area Shyamtarai: 26 plots
+  JASHPUR: 16 plots
+  KHAMARIA INDUSTRIAL AREA: 89 plots
+  LAKHANPURI: 215 plots
+  METAL PARK PHASE II: 71 plots
+  MUNGELI: 55 plots
+  PARASGARHI INDUSTRIAL AREA: 30 plots
+  PHARMACEUTICAL PARK: 30 plots
+  PLASTIC PARK: 48 plots
+  Parasiya Industrial Area: 89 plots
+  RAIL PARK: 22 plots
+  RAIPUR: 39 plots
+  RAJNANDGAON: 120 plots
+  READYMADE GARMENTS PARK: 30 plots
+  SARGUJA: 53 plots
+  SILPAHARI INDUSTRIAL AREA: 62 plots
+  SURAJPUR: 88 plots
+  TEKNAR: 89 plots
+  TEXTILE PARK: 9 plots
+  Tilda: 130 plots *** TILDA ***
+  Ulakiya Industrial Area and Food Park: 60 plots

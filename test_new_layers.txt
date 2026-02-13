@@ -1,0 +1,21 @@
+OK CGCOG_DATABASE:csidc_industrial_area_with_plots
+   5 feats, keys=['gid', 'objectid', 'district', 'plot_type', 'total_area', 'reservatio', 'plot_munci', 'corner_plo', 'premium_ba', 'addi_premi', 'total_prem', 'label', 'tot_premiu', 'location', 'remark', 'sector_inf', 'industrial', 'district_i', 'plotno_inf', 'uniqueplot', 'plotactiva', 'plotupdate', 'plot_yesno', 'category_i', 'quest', 'status_inf', 'applied_ti', 'alloted_ti', 'allotmentr', 'industri_1', 'industri_2', 'gis_tid', 'st_area_sh', 'st_length_', 'uidv1', 'status_from_csidc', 'uid']
+   sample: {"gid": 1, "objectid": 0, "district": "RAIPUR", "plot_type": "INDUSTRIAL PURPOSE", "total_area": 1400, "reservatio": null, "plot_munci": null, "corner_plo": "YES", "premium_ba": 25000000, "addi_premi": 2500000, "total_prem": 27500000, "label": null, "tot_premiu": 0.0, "location": "Sector-5 Nava Raip
+OK CGCOG_DATABASE:csidc_industrialareaentities
+   5 feats, keys=['objectid', 'district', 'plot_type', 'total_area', 'reservatio', 'plot_munci', 'corner_plo', 'premium_ba', 'addi_premi', 'total_prem', 'label', 'tot_premiu', 'location', 'remark', 'sector_inf', 'industrial', 'district_i', 'plotno_inf', 'uniqueplot', 'plotactiva', 'plotupdate', 'plot_yesno', 'category_i', 'quest', 'status_inf', 'applied_ti', 'alloted_ti', 'allotmentr', 'industri_1', 'industri_2', 'gis_tid', 'shape_leng', 'shape_area']
+   sample: {"objectid": 1351, "district": "Dantewada", "plot_type": null, "total_area": 0.0, "reservatio": null, "plot_munci": null, "corner_plo": null, "premium_ba": 0.0, "addi_premi": 0.0, "total_prem": 0.0, "label": "PARKING", "tot_premiu": 0.0, "location": "Tekanar", "remark": null, "sector_inf": "Other", 
+OK CGCOG_DATABASE:csidc_industrial_districts
+   5 feats, keys=['objectid_1', 'objectid_2', 'objectid', 'location', 'hindi', 'ind_zone']
+   sample: {"objectid_1": 1, "objectid_2": 1, "objectid": 67, "location": "KORBA", "hindi": "dksjck", "ind_zone": "Red Zone"}
+OK CGCOG_DATABASE:directoindustrialarea
+   5 feats, keys=['plot', 'name', 'category']
+   sample: {"plot": null, "name": "GRAMIN  KARMSALA NARAYANPUR", "category": "OTHER"}
+OK CGCOG_DATABASE:directoindustrialareaouterboundary
+   5 feats, keys=['name']
+   sample: {"name": "SEMI URBAN INDUSTRIAL AREA GHAMHARIYA"}
+OK CGCOG_DATABASE:industrial_area_outer_boundary
+   5 feats, keys=['gid', 'objectid_1', 'fid_indust', 'objectid', 'district', 'plot_type', 'total_area', 'reservatio', 'plot_munci', 'corner_plo', 'premium_ba', 'addi_premi', 'total_prem', 'label', 'tot_premiu', 'location', 'remark', 'sector_inf', 'industrial', 'district_i', 'plotno_inf', 'uniqueplot', 'plotactiva', 'plotupdate', 'plot_yesno', 'category_i', 'quest', 'status_inf', 'applied_ti', 'alloted_ti', 'allotmentr', 'industri_2', 'gis_tid', 'fid_indu_1', 'objectid_2', 'industri_3', 'location_1', 'industri_4', 'st_area__1', 'st_length1', 'uid']
+   sample: {"gid": 1, "objectid_1": 1, "fid_indust": 0, "objectid": 1183, "district": "DURG", "plot_type": "ALLOTED", "total_area": 0.0, "reservatio": null, "plot_munci": null, "corner_plo": null, "premium_ba": 0.0, "addi_premi": 0.0, "total_prem": 0.0, "label": null, "tot_premiu": 0.0, "location": null, "rema
+OK CGCOG_DATABASE:industrial_area_(outer_boundary)__OLD
+   5 feats, keys=['gid', 'objectid', 'industrial', 'location', 'industri_1', 'show_yn', 'st_area_sh', 'st_length_']
+   sample: {"gid": 21, "objectid": 61, "industrial": "KHAPRI KHURD", "location": "KHAPRI KHURD", "industri_1": "KHAPRI KHURD", "show_yn": "YES", "st_area_sh": 7.89522741552e-06, "st_length_": 0.016247816323}

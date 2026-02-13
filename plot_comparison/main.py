@@ -34,7 +34,7 @@ from plot_comparison.report import (
 )
 
 
-def generate_sample_images(plots_gdf, images_dir):
+def generate_sample_images(plots_gdf, images_dir, overwrite=False):
     """
     Generate simple sample satellite images for plots that don't have images.
     
@@ -44,6 +44,7 @@ def generate_sample_images(plots_gdf, images_dir):
     Args:
         plots_gdf: GeoDataFrame with plot data.
         images_dir: Directory to save generated images.
+        overwrite: If True, regenerate images even if they exist.
     """
     import numpy as np
     import cv2
@@ -56,17 +57,26 @@ def generate_sample_images(plots_gdf, images_dir):
         plot_id = row.get("plot_id", f"UNKNOWN_{idx}")
         img_path = os.path.join(images_dir, f"{plot_id}_current.jpg")
 
-        if os.path.exists(img_path):
-            continue  # Skip if image already exists
+        if os.path.exists(img_path) and not overwrite:
+            continue  # Skip if image already exists and no overwrite requested
 
         # Create a 256x256 synthetic satellite image
         img = np.zeros((256, 256, 3), dtype=np.uint8)
+        
+        # Parse properties safely (handle both live and static field names)
         zone = row.get("zone", "").upper()
-        plot_status = row.get("status", "").lower()
+        # Live data uses LABEL, static uses status
+        status_raw = row.get("status", "") or row.get("LABEL", "") or ""
+        plot_status = status_raw.lower()
+        
+        # Check for keywords in Label/Status
+        is_allotted = "allot" in plot_status
+        is_vacant = "vacant" in plot_status
+        is_green = "green" in zone or "park" in zone or "garden" in plot_status
 
-        if zone in ("GREEN_AREA", "WATER_BODY"):
+        if is_green or zone in ("GREEN_AREA", "WATER_BODY"):
             # Green or blue tones — should appear vacant
-            base_color = (34, 139, 34) if zone == "GREEN_AREA" else (139, 100, 30)
+            base_color = (34, 139, 34) if "green" in str(zone).lower() else (139, 100, 30)
             img[:, :] = base_color
             # Add some natural texture
             noise = np.random.randint(0, 30, img.shape, dtype=np.uint8)
@@ -81,10 +91,11 @@ def generate_sample_images(plots_gdf, images_dir):
             for y in range(0, 256, 30):
                 cv2.line(img, (0, y), (256, y), (180, 180, 180), 2)
 
-        elif plot_status == "allotted":
+        elif is_allotted:
             # Simulate varying development levels
+            # Bias towards "Full" or "Partial" for Allotted plots
             development_level = np.random.choice(["vacant", "partial", "full"],
-                                                  p=[0.2, 0.4, 0.4])
+                                                  p=[0.1, 0.4, 0.5])
 
             if development_level == "vacant":
                 # Mostly green/brown — empty land
@@ -98,7 +109,7 @@ def generate_sample_images(plots_gdf, images_dir):
                 noise = np.random.randint(0, 20, img.shape, dtype=np.uint8)
                 img = cv2.add(img, noise)
                 # Add some building-like rectangles
-                for _ in range(3):
+                for _ in range(4):
                     x1 = np.random.randint(20, 150)
                     y1 = np.random.randint(20, 150)
                     x2 = x1 + np.random.randint(30, 80)
@@ -107,26 +118,31 @@ def generate_sample_images(plots_gdf, images_dir):
                              180 + np.random.randint(0, 50),
                              180 + np.random.randint(0, 50))
                     cv2.rectangle(img, (x1, y1), (x2, y2), color, -1)
-                    cv2.rectangle(img, (x1, y1), (x2, y2), (100, 100, 100), 2)
+                    cv2.rectangle(img, (x1, y1), (x2, y2), (200, 200, 200), 2) # Stronger usage for edge detection
 
             else:  # full
                 # Dense structures
-                img[:, :] = (200, 200, 200)
+                img[:, :] = (180, 180, 180) # Concrete base
                 noise = np.random.randint(0, 20, img.shape, dtype=np.uint8)
                 img = cv2.add(img, noise)
-                for _ in range(8):
+                # Drawing highly textured industrial roof patterns
+                for i in range(0, 256, 20):
+                     cv2.line(img, (0, i), (256, i), (100, 100, 100), 1)
+                     
+                for _ in range(12):
                     x1 = np.random.randint(5, 180)
                     y1 = np.random.randint(5, 180)
-                    x2 = x1 + np.random.randint(20, 60)
-                    y2 = y1 + np.random.randint(20, 60)
-                    color = (150 + np.random.randint(0, 80),
-                             150 + np.random.randint(0, 80),
-                             150 + np.random.randint(0, 80))
+                    x2 = x1 + np.random.randint(30, 70)
+                    y2 = y1 + np.random.randint(30, 70)
+                    color = (120 + np.random.randint(0, 60),
+                             120 + np.random.randint(0, 60),
+                             140 + np.random.randint(0, 60))
                     cv2.rectangle(img, (x1, y1), (x2, y2), color, -1)
-                    cv2.rectangle(img, (x1, y1), (x2, y2), (80, 80, 80), 2)
+                    cv2.rectangle(img, (x1, y1), (x2, y2), (50, 50, 50), 3) # Heavy edges
+                
                 # Add road-like features
-                cv2.line(img, (0, 128), (256, 128), (100, 100, 100), 4)
-                cv2.line(img, (128, 0), (128, 256), (100, 100, 100), 4)
+                cv2.line(img, (0, 128), (256, 128), (80, 80, 80), 6)
+                cv2.line(img, (128, 0), (128, 256), (80, 80, 80), 6)
 
         else:
             # Default — some texture

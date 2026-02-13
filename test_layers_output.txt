@@ -1,0 +1,24 @@
+CQL TILDA: 0 features
+
+Total plots: 4159
+Unique areas: 20
+  AMASEONI: 30 plots
+  BHANPURI: 139 plots
+  BIRKONI: 264 plots
+  BORAI: 332 plots
+  ELECTRONIC EMC: 108 plots
+  GOGOAN: 20 plots
+  GONDWARA: 21 plots
+  HARINCHHAPARA: 114 plots
+  KAPAN: 175 plots
+  NAYANPUR-GIBARGANJ: 251 plots
+  RANIDURGAWATI ANJANI: 50 plots
+  RAWABHATA: 82 plots
+  SILTARA PHASE 1: 299 plots
+  SILTARA PHASE 2: 253 plots
+  SIRGITTI: 594 plots
+  SONDONGARI: 19 plots
+  TENDUA PHASE 1: 123 plots
+  TENDUA PHASE 2: 63 plots
+  TIFRA: 234 plots
+  URLA: 988 plots
