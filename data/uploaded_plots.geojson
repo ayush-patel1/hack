@@ -1,0 +1,555 @@
+{
+  "type": "FeatureCollection",
+  "crs": {
+    "type": "name",
+    "properties": {
+      "name": "EPSG:4326"
+    }
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "plot_id": "PLOT_1",
+        "plot_number": "1",
+        "zone": "TILDA",
+        "area_sqm": 450,
+        "status": "allotted",
+        "allotment_date": "2023-01-15",
+        "industry_type": "Manufacturing"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              81.649,
+              20.8795
+            ],
+            [
+              81.6495,
+              20.8795
+            ],
+            [
+              81.6495,
+              20.879
+            ],
+            [
+              81.649,
+              20.879
+            ],
+            [
+              81.649,
+              20.8795
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "plot_id": "PLOT_36",
+        "plot_number": "36",
+        "zone": "TILDA",
+        "area_sqm": 500,
+        "status": "allotted",
+        "allotment_date": "2022-11-20",
+        "industry_type": "Warehouse"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              81.651,
+              20.8765
+            ],
+            [
+              81.6515,
+              20.8765
+            ],
+            [
+              81.6515,
+              20.876
+            ],
+            [
+              81.651,
+              20.876
+            ],
+            [
+              81.651,
+              20.8765
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "plot_id": "PLOT_37",
+        "plot_number": "37",
+        "zone": "TILDA",
+        "area_sqm": 500,
+        "status": "allotted",
+        "allotment_date": "2022-11-20",
+        "industry_type": "Warehouse"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              81.6515,
+              20.8765
+            ],
+            [
+              81.652,
+              20.8765
+            ],
+            [
+              81.652,
+              20.876
+            ],
+            [
+              81.6515,
+              20.876
+            ],
+            [
+              81.6515,
+              20.8765
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "plot_id": "PLOT_68",
+        "plot_number": "68",
+        "zone": "TILDA",
+        "area_sqm": 600,
+        "status": "allotted",
+        "allotment_date": "2023-03-10",
+        "industry_type": "Food Processing"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              81.6525,
+              20.877
+            ],
+            [
+              81.6532,
+              20.877
+            ],
+            [
+              81.6532,
+              20.8764
+            ],
+            [
+              81.6525,
+              20.8764
+            ],
+            [
+              81.6525,
+              20.877
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "plot_id": "PLOT_80",
+        "plot_number": "80",
+        "zone": "TILDA",
+        "area_sqm": 550,
+        "status": "allotted",
+        "allotment_date": "2023-04-05",
+        "industry_type": "Manufacturing"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              81.654,
+              20.8775
+            ],
+            [
+              81.6547,
+              20.8775
+            ],
+            [
+              81.6547,
+              20.8769
+            ],
+            [
+              81.654,
+              20.8769
+            ],
+            [
+              81.654,
+              20.8775
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "plot_id": "PLOT_149_15",
+        "plot_number": "149/15",
+        "zone": "EXPANSION",
+        "area_sqm": 1200,
+        "status": "allotted",
+        "allotment_date": "2023-06-15",
+        "industry_type": "Warehouse"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              81.658,
+              20.8785
+            ],
+            [
+              81.6595,
+              20.8785
+            ],
+            [
+              81.6595,
+              20.8775
+            ],
+            [
+              81.658,
+              20.8775
+            ],
+            [
+              81.658,
+              20.8785
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "plot_id": "GREEN_AREA_1",
+        "plot_number": "GA-1",
+        "zone": "GREEN_AREA",
+        "area_sqm": 800,
+        "status": "reserved",
+        "allotment_date": null,
+        "industry_type": "Green Space",
+        "construction_allowed": false
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              81.6555,
+              20.878
+            ],
+            [
+              81.6565,
+              20.878
+            ],
+            [
+              81.6565,
+              20.8772
+            ],
+            [
+              81.6555,
+              20.8772
+            ],
+            [
+              81.6555,
+              20.878
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "plot_id": "PARKING_1",
+        "plot_number": "PARK-1",
+        "zone": "PARKING",
+        "area_sqm": 600,
+        "status": "reserved",
+        "allotment_date": null,
+        "industry_type": "Parking",
+        "construction_allowed": false
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              81.66,
+              20.877
+            ],
+            [
+              81.661,
+              20.877
+            ],
+            [
+              81.661,
+              20.8763
+            ],
+            [
+              81.66,
+              20.8763
+            ],
+            [
+              81.66,
+              20.877
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "plot_id": "WAREHOUSE_ZONE",
+        "plot_number": "WH-1",
+        "zone": "WAREHOUSE",
+        "area_sqm": 1500,
+        "status": "allotted",
+        "allotment_date": "2023-02-20",
+        "industry_type": "Cold Storage",
+        "construction_allowed": true
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              81.657,
+              20.8765
+            ],
+            [
+              81.659,
+              20.8765
+            ],
+            [
+              81.659,
+              20.8755
+            ],
+            [
+              81.657,
+              20.8755
+            ],
+            [
+              81.657,
+              20.8765
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "plot_id": "WATER_BODY_1",
+        "plot_number": "WB-1",
+        "zone": "WATER_BODY",
+        "area_sqm": 400,
+        "status": "reserved",
+        "allotment_date": null,
+        "industry_type": "Water Body",
+        "construction_allowed": false
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              81.6548,
+              20.8788
+            ],
+            [
+              81.6555,
+              20.8788
+            ],
+            [
+              81.6555,
+              20.8783
+            ],
+            [
+              81.6548,
+              20.8783
+            ],
+            [
+              81.6548,
+              20.8788
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "plot_id": "FOOD_PARK_1",
+        "plot_number": "FP-1",
+        "zone": "FOOD_PARK",
+        "area_sqm": 1000,
+        "status": "allotted",
+        "allotment_date": "2023-05-10",
+        "industry_type": "Food Processing",
+        "construction_allowed": true
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              81.6505,
+              20.878
+            ],
+            [
+              81.652,
+              20.878
+            ],
+            [
+              81.652,
+              20.877
+            ],
+            [
+              81.6505,
+              20.877
+            ],
+            [
+              81.6505,
+              20.878
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "plot_id": "AMENITIES_1",
+        "plot_number": "AM-1",
+        "zone": "AMENITIES",
+        "area_sqm": 700,
+        "status": "reserved",
+        "allotment_date": null,
+        "industry_type": "Amenities",
+        "construction_allowed": true
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              81.6495,
+              20.877
+            ],
+            [
+              81.6505,
+              20.877
+            ],
+            [
+              81.6505,
+              20.8763
+            ],
+            [
+              81.6495,
+              20.8763
+            ],
+            [
+              81.6495,
+              20.877
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "plot_id": "ROAD_MAIN",
+        "plot_number": "ROAD-1",
+        "zone": "ROAD",
+        "area_sqm": 2000,
+        "status": "infrastructure",
+        "allotment_date": null,
+        "industry_type": "Road",
+        "construction_allowed": false
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            81.6485,
+            20.88
+          ],
+          [
+            81.6485,
+            20.875
+          ],
+          [
+            81.6615,
+            20.875
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "plot_id": "BOUNDARY_MAIN",
+        "plot_number": "BOUNDARY",
+        "zone": "BOUNDARY",
+        "area_sqm": 0,
+        "status": "infrastructure",
+        "allotment_date": null,
+        "industry_type": "Boundary",
+        "construction_allowed": false
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              81.648,
+              20.88
+            ],
+            [
+              81.662,
+              20.88
+            ],
+            [
+              81.662,
+              20.8745
+            ],
+            [
+              81.648,
+              20.8745
+            ],
+            [
+              81.648,
+              20.88
+            ]
+          ]
+        ]
+      }
+    }
+  ]
+}

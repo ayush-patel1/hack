@@ -1,0 +1,20 @@
+{
+  "total_plots": 10,
+  "total_violations": 8,
+  "compliant": 2,
+  "severity_breakdown": {
+    "CRITICAL": 5,
+    "HIGH": 0,
+    "MEDIUM": 0,
+    "LOW": 3
+  },
+  "type_breakdown": {
+    "ENCROACHMENT": 4,
+    "VACANT_PLOT": 2,
+    "UNAUTHORIZED_CONSTRUCTION": 1,
+    "BOUNDARY_DEVIATION": 1
+  },
+  "total_estimated_cost_inr": 2650000,
+  "satellite_data_available": true,
+  "generated_at": "2026-02-10T23:45:03.887383"
+}

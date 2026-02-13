@@ -1,0 +1,132 @@
+[
+  {
+    "plot_id": "P001",
+    "reference_image": "data/images/P001_reference.jpg",
+    "current_image": "data/images/P001_current.jpg",
+    "coordinates": [
+      21.2544,
+      81.6236
+    ],
+    "area_sqm": 25473.9,
+    "owner": "Industrial Unit 1",
+    "allotment_date": "2015-10-09",
+    "violation_type": "COMPLIANT"
+  },
+  {
+    "plot_id": "P002",
+    "reference_image": "data/images/P002_reference.jpg",
+    "current_image": "data/images/P002_current.jpg",
+    "coordinates": [
+      21.2544,
+      81.6266
+    ],
+    "area_sqm": 40091.4,
+    "owner": "Industrial Unit 2",
+    "allotment_date": "2013-03-15",
+    "violation_type": "ENCROACHMENT"
+  },
+  {
+    "plot_id": "P003",
+    "reference_image": "data/images/P003_reference.jpg",
+    "current_image": "data/images/P003_current.jpg",
+    "coordinates": [
+      21.2544,
+      81.6296
+    ],
+    "area_sqm": 37337.4,
+    "owner": "Industrial Unit 3",
+    "allotment_date": "2013-09-05",
+    "violation_type": "VACANT_PLOT"
+  },
+  {
+    "plot_id": "P004",
+    "reference_image": "data/images/P004_reference.jpg",
+    "current_image": "data/images/P004_current.jpg",
+    "coordinates": [
+      21.2544,
+      81.6326
+    ],
+    "area_sqm": 42626.1,
+    "owner": "Industrial Unit 4",
+    "allotment_date": "2018-02-02",
+    "violation_type": "ENCROACHMENT"
+  },
+  {
+    "plot_id": "P005",
+    "reference_image": "data/images/P005_reference.jpg",
+    "current_image": "data/images/P005_current.jpg",
+    "coordinates": [
+      21.2544,
+      81.6356
+    ],
+    "area_sqm": 37903.4,
+    "owner": "Industrial Unit 5",
+    "allotment_date": "2017-09-28",
+    "violation_type": "UNAUTHORIZED_CONSTRUCTION"
+  },
+  {
+    "plot_id": "P006",
+    "reference_image": "data/images/P006_reference.jpg",
+    "current_image": "data/images/P006_current.jpg",
+    "coordinates": [
+      21.2514,
+      81.6236
+    ],
+    "area_sqm": 24874.9,
+    "owner": "Industrial Unit 6",
+    "allotment_date": "2017-10-19",
+    "violation_type": "ENCROACHMENT"
+  },
+  {
+    "plot_id": "P007",
+    "reference_image": "data/images/P007_reference.jpg",
+    "current_image": "data/images/P007_current.jpg",
+    "coordinates": [
+      21.2514,
+      81.6266
+    ],
+    "area_sqm": 33383.2,
+    "owner": "Industrial Unit 7",
+    "allotment_date": "2015-04-22",
+    "violation_type": "COMPLIANT"
+  },
+  {
+    "plot_id": "P008",
+    "reference_image": "data/images/P008_reference.jpg",
+    "current_image": "data/images/P008_current.jpg",
+    "coordinates": [
+      21.2514,
+      81.6296
+    ],
+    "area_sqm": 31207.7,
+    "owner": "Industrial Unit 8",
+    "allotment_date": "2015-09-28",
+    "violation_type": "ENCROACHMENT"
+  },
+  {
+    "plot_id": "P009",
+    "reference_image": "data/images/P009_reference.jpg",
+    "current_image": "data/images/P009_current.jpg",
+    "coordinates": [
+      21.2514,
+      81.6326
+    ],
+    "area_sqm": 34291.5,
+    "owner": "Industrial Unit 9",
+    "allotment_date": "2016-04-05",
+    "violation_type": "VACANT_PLOT"
+  },
+  {
+    "plot_id": "P010",
+    "reference_image": "data/images/P010_reference.jpg",
+    "current_image": "data/images/P010_current.jpg",
+    "coordinates": [
+      21.2514,
+      81.6356
+    ],
+    "area_sqm": 24404.7,
+    "owner": "Industrial Unit 10",
+    "allotment_date": "2013-02-14",
+    "violation_type": "BOUNDARY_DEVIATION"
+  }
+]

@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>CSIDC Plot Data Downloader</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #1a1a2e;
+            color: #e0e0e0;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: #4ecdc4;
+        }
+
+        button {
+            background: #4ecdc4;
+            color: #1a1a2e;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 5px;
+        }
+
+        button:hover {
+            background: #45b7aa;
+        }
+
+        button:disabled {
+            background: #666;
+            cursor: not-allowed;
+        }
+
+        #log {
+            background: #16213e;
+            border: 1px solid #333;
+            padding: 15px;
+            border-radius: 8px;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 13px;
+            white-space: pre-wrap;
+        }
+
+        .success {
+            color: #4ecdc4;
+        }
+
+        .error {
+            color: #ff6b6b;
+        }
+
+        .info {
+            color: #ffd93d;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+            margin: 15px 0;
+        }
+
+        .stat {
+            background: #16213e;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-num {
+            font-size: 24px;
+            font-weight: bold;
+            color: #4ecdc4;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1> CSIDC Industrial Plot Data Downloader</h1>
+        <p>Downloads <b>real plot polygon data</b> from the CG GIS GeoServer via WFS (Web Feature Service).</p>
+
+        <div class="stats">
+            <div class="stat">
+                <div class="stat-num" id="total">0</div>Plot Features
+            </div>
+            <div class="stat">
+                <div class="stat-num" id="boundary_count">0</div>Boundary Features
+            </div>
+            <div class="stat">
+                <div class="stat-num" id="areas">0</div>Industrial Areas
+            </div>
+        </div>
+
+        <div>
+            <button onclick="downloadAll()" id="btnDownload">📥 Download All (Plots + Boundaries)</button>
+            <button onclick="downloadGeoJSON('plots')" id="btnSavePlots" disabled>💾 Save Plots GeoJSON</button>
+            <button onclick="downloadGeoJSON('boundary')" id="btnSaveBoundary" disabled>� Save Boundary GeoJSON</button>
+        </div>
+
+        <div id="log"></div>
+    </div>
+
+    <script>
+        const BASE = 'https://cggis.cgstate.gov.in/giscg/wmscgcog';
+        const PLOT_LAYER = 'CGCOG_DATABASE:cg_industrial_area_with_plot_info';
+        const BOUNDARY_LAYER = 'CGCOG_DATABASE:csidc_industrial_area_outer_boundary';
+        const BATCH = 200;
+        let plotFeatures = [];
+        let boundaryFeatures = [];
+
+        function log(msg, cls = '') {
+            const el = document.getElementById('log');
+            el.innerHTML += `<span class="${cls}">${msg}</span>\n`;
+            el.scrollTop = el.scrollHeight;
+        }
+
+        async function fetchBatch(layer, offset, maxFeatures) {
+            const url = `${BASE}?SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature` +
+                `&TYPENAME=${layer}&OUTPUTFORMAT=application/json` +
+                `&SRSNAME=EPSG:4326&MAXFEATURES=${maxFeatures || BATCH}&STARTINDEX=${offset}`;
+            const resp = await fetch(url);
+            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+            return await resp.json();
+        }
+
+        function cleanCoords(geom) {
+            if (geom.type === 'MultiPolygon') {
+                geom.coordinates = geom.coordinates.map(poly =>
+                    poly.map(ring => ring.map(c => [c[0], c[1]]))
+                );
+            } else if (geom.type === 'Polygon') {
+                geom.coordinates = geom.coordinates.map(ring =>
+                    ring.map(c => [c[0], c[1]])
+                );
+            }
+            return geom;
+        }
+
+        async function downloadLayer(layer, label) {
+            let features = [];
+            let offset = 0;
+            log(`\n📦 Downloading: ${label}`, 'info');
+            log(`   Layer: ${layer}`, 'info');
+
+            while (true) {
+                log(`   Fetching batch at offset ${offset}...`);
+                const data = await fetchBatch(layer, offset, BATCH);
+                const batch = data.features || [];
+
+                if (batch.length === 0) break;
+
+                batch.forEach(f => { if (f.geometry) cleanCoords(f.geometry); });
+                features.push(...batch);
+                log(`   ✅ Got ${batch.length} (total: ${features.length})`, 'success');
+
+                if (batch.length < BATCH) break;
+                offset += BATCH;
+                await new Promise(r => setTimeout(r, 500));
+            }
+
+            log(`   Done: ${features.length} features`, 'success');
+            return features;
+        }
+
+        async function downloadAll() {
+            const btn = document.getElementById('btnDownload');
+            btn.disabled = true;
+            plotFeatures = [];
+            boundaryFeatures = [];
+
+            log('🚀 Starting CSIDC data download...', 'info');
+
+            try {
+                // 1. Download plot data
+                plotFeatures = await downloadLayer(PLOT_LAYER, 'Industrial Plot Data (4,159 plots)');
+                document.getElementById('total').textContent = plotFeatures.length;
+
+                // 2. Download outer boundaries
+                boundaryFeatures = await downloadLayer(BOUNDARY_LAYER, 'Industrial Area Outer Boundaries (36 areas)');
+                document.getElementById('boundary_count').textContent = boundaryFeatures.length;
+
+                // Count unique industrial areas from both
+                const areas = new Set([
+                    ...plotFeatures.map(f => f.properties?.INDUSTRIAL).filter(Boolean),
+                    ...boundaryFeatures.map(f => f.properties?.industrial).filter(Boolean)
+                ]);
+                document.getElementById('areas').textContent = areas.size;
+
+                log(`\n🎉 Download complete!`, 'success');
+                log(`   Plot features: ${plotFeatures.length}`, 'success');
+                log(`   Boundary features: ${boundaryFeatures.length}`, 'success');
+                log(`   Unique industrial areas: ${areas.size}`, 'success');
+
+                // List areas
+                log('\nIndustrial areas found:', 'info');
+                [...areas].sort().forEach(a => log(`  • ${a}`));
+
+                document.getElementById('btnSavePlots').disabled = false;
+                document.getElementById('btnSaveBoundary').disabled = false;
+
+            } catch (e) {
+                log(`\n❌ Error: ${e.message}`, 'error');
+                log('The GeoServer may have rate-limited. Try again in a minute.', 'error');
+                if (plotFeatures.length > 0) document.getElementById('btnSavePlots').disabled = false;
+                if (boundaryFeatures.length > 0) document.getElementById('btnSaveBoundary').disabled = false;
+            }
+
+            btn.disabled = false;
+        }
+
+        function buildGeoJSON(features) {
+            return JSON.stringify({
+                type: 'FeatureCollection',
+                crs: { type: 'name', properties: { name: 'EPSG:4326' } },
+                features: features
+            }, null, 2);
+        }
+
+        function downloadGeoJSON(type) {
+            let features, filename;
+            if (type === 'boundary') {
+                features = boundaryFeatures;
+                filename = 'csidc_outer_boundary.geojson';
+            } else {
+                features = plotFeatures;
+                filename = 'csidc_real_plots.geojson';
+            }
+
+            if (features.length === 0) {
+                log(`\n⚠️ No ${type} features to save`, 'error');
+                return;
+            }
+
+            const blob = new Blob([buildGeoJSON(features)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+            URL.revokeObjectURL(url);
+            log(`\n💾 Saved ${filename} (${features.length} features). Place it in the data/ folder!`, 'success');
+        }
+    </script>
+</body>
+
+</html>
