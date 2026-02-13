@@ -738,6 +738,269 @@ def render_plot_comparison_tab(data):
     st.markdown('<div class="section-header">🔍 GeoJSON Plot Comparison — Allotted vs Current</div>',
                 unsafe_allow_html=True)
 
+    # ── Section 0: Real-Time Live Fetch from CSIDC ─────────
+    st.markdown("### 🔄 Fetch Live Data from CSIDC GeoServer")
+    st.caption("Real-time WFS data from cggis.cgstate.gov.in — no authentication required")
+
+    fc1, fc2 = st.columns([2, 1])
+    with fc1:
+        area_filter = st.text_input(
+            "🏭 Industrial Area Filter",
+            placeholder="e.g. URLA, SILTARA, TIFRA (leave empty for all)",
+            help="Filter plots by industrial area name. Partial matches work."
+        )
+    with fc2:
+        max_plots = st.number_input("Max Plots", min_value=50, max_value=5000,
+                                    value=500, step=100)
+
+    btn_col1, btn_col2, btn_col3 = st.columns(3)
+    with btn_col1:
+        fetch_plots_btn = st.button("📥 Fetch Plots + Boundaries",
+                                    use_container_width=True, key="fetch_live")
+    with btn_col2:
+        fetch_areas_btn = st.button("📋 List Industrial Areas",
+                                    use_container_width=True, key="list_areas")
+    with btn_col3:
+        clear_btn = st.button("🗑️ Clear Cached Data",
+                              use_container_width=True, key="clear_live")
+
+    if fetch_areas_btn:
+        with st.spinner("🔍 Querying CSIDC GeoServer for available areas..."):
+            try:
+                from fetch_csidc_live import list_industrial_areas
+                areas = list_industrial_areas()
+                st.success(f"✅ Found **{len(areas)}** industrial areas")
+                # Display in columns
+                cols = st.columns(3)
+                for i, area in enumerate(areas):
+                    with cols[i % 3]:
+                        st.markdown(f"• {area}")
+            except Exception as e:
+                st.error(f"Failed to fetch areas: {e}")
+
+    if fetch_plots_btn:
+        progress_bar = st.progress(0, text="Connecting to CSIDC GeoServer...")
+        status_text = st.empty()
+
+        def update_progress(fetched, batch):
+            pct = min(fetched / max_plots, 0.95)
+            progress_bar.progress(pct, text=f"Fetched {fetched:,} features (batch {batch})...")
+
+        try:
+            from fetch_csidc_live import fetch_and_save
+            with st.spinner(""):
+                plots_path, bounds_path, n_plots, n_bounds = fetch_and_save(
+                    industrial_area=area_filter or None,
+                    progress_callback=update_progress,
+                )
+
+            progress_bar.progress(1.0, text="✅ Complete!")
+            st.success(
+                f"🎉 Fetched **{n_plots:,} plots** and **{n_bounds} boundaries** "
+                f"from CSIDC GeoServer!"
+            )
+
+            # Clear cache so new data loads
+            st.cache_data.clear()
+            st.rerun()
+
+        except Exception as e:
+            progress_bar.empty()
+            st.error(f"❌ Fetch failed: {e}")
+            st.info("The GeoServer may be temporarily unavailable. Try again in a minute.")
+
+    if clear_btn:
+        import os as _os
+        for fname in ["csidc_live_plots.geojson", "csidc_live_boundaries.geojson"]:
+            fpath = os.path.join(DATA_DIR, fname)
+            if _os.path.exists(fpath):
+                _os.remove(fpath)
+        st.success("🗑️ Live data cleared.")
+        st.cache_data.clear()
+        st.rerun()
+
+    # ── Display live-fetched data if available ──
+    live_plots_path = os.path.join(DATA_DIR, "csidc_live_plots.geojson")
+    live_bounds_path = os.path.join(DATA_DIR, "csidc_live_boundaries.geojson")
+
+    if os.path.exists(live_plots_path):
+        with open(live_plots_path) as f:
+            live_plots = json.load(f)
+        live_bounds = None
+        if os.path.exists(live_bounds_path):
+            with open(live_bounds_path) as f:
+                live_bounds = json.load(f)
+
+        feats = live_plots.get("features", [])
+        if feats:
+            st.markdown("#### 🗺️ Live CSIDC Plot Data")
+
+            # Summary metrics
+            mc1, mc2, mc3, mc4 = st.columns(4)
+            areas_set = set(f.get("properties", {}).get("INDUSTRIAL", "") for f in feats)
+            alloted = sum(1 for f in feats
+                         if "ALLOT" in (f.get("properties", {}).get("STATUS", "") or "").upper())
+            vacant = sum(1 for f in feats
+                        if "VACANT" in (f.get("properties", {}).get("STATUS", "") or "").upper())
+            with mc1:
+                st.markdown(f"""
+                <div class="metric-card blue">
+                    <h3>{len(feats):,}</h3>
+                    <p>📊 Total Plots</p>
+                </div>""", unsafe_allow_html=True)
+            with mc2:
+                st.markdown(f"""
+                <div class="metric-card green">
+                    <h3>{alloted:,}</h3>
+                    <p>✅ Allotted</p>
+                </div>""", unsafe_allow_html=True)
+            with mc3:
+                st.markdown(f"""
+                <div class="metric-card yellow">
+                    <h3>{vacant:,}</h3>
+                    <p>⚠️ Vacant</p>
+                </div>""", unsafe_allow_html=True)
+            with mc4:
+                st.markdown(f"""
+                <div class="metric-card">
+                    <h3>{len(areas_set)}</h3>
+                    <p>🏭 Industrial Areas</p>
+                </div>""", unsafe_allow_html=True)
+
+            # Map
+            all_lons, all_lats = [], []
+            for feat in feats:
+                geom = feat.get("geometry", {})
+                gtype = geom.get("type", "")
+                if gtype == "MultiPolygon":
+                    for poly in geom["coordinates"]:
+                        for ring in poly:
+                            for c in ring:
+                                all_lons.append(c[0])
+                                all_lats.append(c[1])
+                elif gtype == "Polygon":
+                    for ring in geom["coordinates"]:
+                        for c in ring:
+                            all_lons.append(c[0])
+                            all_lats.append(c[1])
+            center_lat = np.mean(all_lats) if all_lats else 21.25
+            center_lon = np.mean(all_lons) if all_lons else 81.63
+
+            m_live = folium.Map(location=[center_lat, center_lon], zoom_start=14,
+                                tiles="CartoDB dark_matter")
+
+            # Status color mapping
+            status_colors = {
+                "ALLOTED": "#2ecc71",
+                "ALLOTTED": "#2ecc71",
+                "VACANT": "#e74c3c",
+                "PROPOSED": "#f39c12",
+                "CANCELLED": "#95a5a6",
+            }
+
+            # Add boundary polygons (thick red outline)
+            if live_bounds and live_bounds.get("features"):
+                bound_group = folium.FeatureGroup(name="🔴 Area Boundaries", show=True)
+                for feat in live_bounds["features"]:
+                    geom = feat.get("geometry", {})
+                    gtype = geom.get("type", "")
+                    props = feat.get("properties", {})
+                    coords_list = []
+                    if gtype == "MultiPolygon":
+                        coords_list = [geom["coordinates"][0][0]]
+                    elif gtype == "Polygon":
+                        coords_list = [geom["coordinates"][0]]
+
+                    for coords in coords_list:
+                        latlng = [(c[1], c[0]) for c in coords]
+                        folium.Polygon(
+                            locations=latlng,
+                            color="#e74c3c",
+                            weight=4,
+                            fill=False,
+                            dash_array="10 5",
+                            tooltip=f"🏭 {props.get('industrial', 'Unknown')} — Boundary",
+                        ).add_to(bound_group)
+                bound_group.add_to(m_live)
+
+            # Add plot polygons
+            plot_group = folium.FeatureGroup(name="📊 Plot Polygons", show=True)
+            for feat in feats:
+                geom = feat.get("geometry", {})
+                gtype = geom.get("type", "")
+                props = feat.get("properties", {})
+
+                coords_list = []
+                if gtype == "MultiPolygon":
+                    coords_list = [geom["coordinates"][0][0]]
+                elif gtype == "Polygon":
+                    coords_list = [geom["coordinates"][0]]
+
+                status = (props.get("STATUS", "") or "").upper()
+                color = "#3498db"
+                for key, c in status_colors.items():
+                    if key in status:
+                        color = c
+                        break
+
+                for coords in coords_list:
+                    latlng = [(c[1], c[0]) for c in coords]
+                    tooltip_html = (
+                        f"<b>Plot {props.get('PLOT_NO', '?')}</b><br>"
+                        f"Area: {props.get('INDUSTRIAL', 'N/A')}<br>"
+                        f"Type: {props.get('TYPE', 'N/A')}<br>"
+                        f"Status: {props.get('STATUS', 'N/A')}<br>"
+                        f"Remark: {props.get('REMARK', 'N/A')}"
+                    )
+                    folium.Polygon(
+                        locations=latlng,
+                        color=color,
+                        weight=2,
+                        fill=True,
+                        fill_color=color,
+                        fill_opacity=0.25,
+                        tooltip=folium.Tooltip(tooltip_html),
+                    ).add_to(plot_group)
+
+            plot_group.add_to(m_live)
+            folium.LayerControl(collapsed=False).add_to(m_live)
+
+            # Legend
+            live_legend = """
+            <div style="position:fixed; bottom:50px; left:50px; z-index:1000;
+                 background:rgba(0,0,0,0.85); padding:14px 18px; border-radius:10px;
+                 color:white; font-size:12px; box-shadow:0 2px 12px rgba(0,0,0,0.4);">
+              <b>Live Data Legend</b><br>
+              <span style="color:#e74c3c">━ ━</span> Area Boundary &nbsp;
+              <span style="color:#2ecc71">■</span> Allotted &nbsp;
+              <span style="color:#e74c3c">■</span> Vacant &nbsp;
+              <span style="color:#f39c12">■</span> Proposed &nbsp;
+              <span style="color:#3498db">■</span> Other
+            </div>
+            """
+            m_live.get_root().html.add_child(folium.Element(live_legend))
+
+            st_folium(m_live, width=None, height=550, use_container_width=True,
+                      key="live_csidc_map")
+
+            # Data table
+            st.markdown("#### 📋 Plot Details")
+            table_rows = []
+            for feat in feats:
+                p = feat.get("properties", {})
+                table_rows.append({
+                    "Plot No": p.get("PLOT_NO", ""),
+                    "Industrial Area": p.get("INDUSTRIAL", ""),
+                    "Type": p.get("TYPE", ""),
+                    "Status": p.get("STATUS", ""),
+                    "Remark": p.get("REMARK", ""),
+                    "Label": p.get("LABEL_2", ""),
+                })
+            st.dataframe(pd.DataFrame(table_rows), use_container_width=True,
+                         height=400)
+
+    st.markdown("---")
+
     # ── Section 1: CSIDC Scraped Data Map ──────────────────
     csidc = data.get("csidc_plots")
     if csidc and csidc.get("features"):
