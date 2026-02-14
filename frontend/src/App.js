@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useUser } from '@clerk/clerk-react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
@@ -8,6 +9,7 @@ import PlotAnalysis from './pages/PlotAnalysis';
 import ViolationTable from './pages/ViolationTable';
 import Charts from './pages/Charts';
 import ExportPage from './pages/ExportPage';
+import SignInPage from './pages/SignInPage';
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: 30000, retry: 1 } },
@@ -24,6 +26,20 @@ const PAGES = [
 
 function App() {
   const [activePage, setActivePage] = useState('dashboard');
+  const { isSignedIn, isLoaded } = useUser();
+
+  if (!isLoaded) {
+    return (
+      <div className="auth-loading">
+        <div className="auth-spinner" />
+        <p>Loading...</p>
+      </div>
+    );
+  }
+
+  if (!isSignedIn) {
+    return <SignInPage />;
+  }
 
   const renderPage = () => {
     switch (activePage) {
@@ -51,3 +67,4 @@ function App() {
 }
 
 export default App;
+
